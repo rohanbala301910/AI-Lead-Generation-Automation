@@ -1,0 +1,667 @@
+{
+  "name": "Tally AI Lead Generation",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "tally-lead",
+        "options": {}
+      },
+      "id": "91b92995-5f8e-478f-89b8-5ac00e3cec5e",
+      "name": "Tally Form Submission",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        192
+      ],
+      "webhookId": "7288f296-6fe2-40cc-be81-879e75c5d8eb"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "name",
+              "name": "name",
+              "value": "={{ $json.body.data.fields.find(f => f.label === \"Enter Full Name\")?.value || \"\" }}",
+              "type": "string"
+            },
+            {
+              "id": "email",
+              "name": "email",
+              "value": "={{ $json.body.data.fields.find(f => f.label === \"Enter Email Address\")?.value || \"\" }}",
+              "type": "string"
+            },
+            {
+              "id": "program",
+              "name": "programInterest",
+              "value": "={{\n  (() => {\n    const f = $json.body.data.fields.find(\n      f => f.label === \"Which Training Program Are You Interested In?\"\n    );\n    const id = f?.value?.[0];\n    return f?.options?.find(o => o.id === id)?.text || \"\";\n  })()\n}}",
+              "type": "string"
+            },
+            {
+              "id": "question",
+              "name": "question",
+              "value": "={{ $json.body.data.fields.find(f => f.label === \"What would you like to know about our training programs?\")?.value || \"\" }}",
+              "type": "string"
+            },
+            {
+              "id": "submittedAt",
+              "name": "submittedAt",
+              "value": "={{ $json.body.data.createdAt || $now.toISO() }}",
+              "type": "string"
+            },
+            {
+              "id": "submissionId",
+              "name": "submissionId",
+              "value": "={{ $json.body.data.submissionId || $json.body.data.responseId || \"\" }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "974600a9-c121-474d-a3e8-e794106954d4",
+      "name": "Normalize Lead",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        272,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "email-check",
+              "leftValue": "={{ $json.email }}",
+              "rightValue": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$",
+              "operator": {
+                "type": "string",
+                "operation": "regex"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "91cfcc60-d879-47f9-b200-04d1940a2004",
+      "name": "Has Valid Email",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        496,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "appGCNtMsH85spuSk",
+          "mode": "list",
+          "cachedResultName": "AI Lead Generation",
+          "cachedResultUrl": "https://airtable.com/appGCNtMsH85spuSk"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tbl8BRVhcV9dWtUyx",
+          "mode": "list",
+          "cachedResultName": "Leads",
+          "cachedResultUrl": "https://airtable.com/appGCNtMsH85spuSk/tbl8BRVhcV9dWtUyx"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name": "={{ $json.name }}",
+            "Email": "={{ $json.email }}",
+            "Program Interest": "={{ $json.programInterest }}",
+            "Question": "={{ $json.question }}",
+            "Submitted At": "={{ $json.submittedAt }}",
+            "Status": "New"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Program Interest",
+              "displayName": "Program Interest",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Question",
+              "displayName": "Question",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Submitted At",
+              "displayName": "Submitted At",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "id": "bbfb7c8c-f5ad-41d9-9861-9fd84509e52a",
+      "name": "Save Lead to Airtable",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        752,
+        96
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "JoWgABtgDm4cScHy",
+          "name": "Airtable account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Name: {{ $(\"Normalize Lead\").item.json.name }}\nProgram interest: {{ $(\"Normalize Lead\").item.json.programInterest }}\nQuestion: {{ $(\"Normalize Lead\").item.json.question }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You triage inbound leads for a professional training business. Classify the inquiry into exactly one category, set a priority (High = ready to buy, group/corporate deal, or time-sensitive; Medium = genuine interest needing info; Low = vague, off-topic, or spam), and write a concise 1-2 sentence summary the owner can act on."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "id": "53597051-5157-4f6a-84f5-3423821daebe",
+      "name": "Categorize & Summarize Inquiry",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        1024,
+        128
+      ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5.4-mini",
+          "cachedResultName": "gpt-5.4-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "id": "9b093350-b7ae-4f45-93a0-813eb4d6c1cd",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        1040,
+        352
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "Gateway credits",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\"type\":\"object\",\"properties\":{\"category\":{\"type\":\"string\",\"enum\":[\"Program Information\",\"Pricing & Enrollment\",\"Scheduling & Availability\",\"Corporate / Group Training\",\"Support / Existing Student\",\"Other\"]},\"priority\":{\"type\":\"string\",\"enum\":[\"High\",\"Medium\",\"Low\"]},\"summary\":{\"type\":\"string\",\"description\":\"One or two sentence summary of what the lead wants\"}},\"required\":[\"category\",\"priority\",\"summary\"]}"
+      },
+      "id": "550ad99e-65ba-431d-a515-d63a29b4eb18",
+      "name": "Lead Analysis Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1168,
+        352
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "recordId",
+              "name": "recordId",
+              "value": "={{ $(\"Save Lead to Airtable\").item.json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "category",
+              "name": "category",
+              "value": "={{ $json.output?.category || \"Uncategorized\" }}",
+              "type": "string"
+            },
+            {
+              "id": "priority",
+              "name": "priority",
+              "value": "={{ $json.output?.priority || \"Medium\" }}",
+              "type": "string"
+            },
+            {
+              "id": "summary",
+              "name": "summary",
+              "value": "={{ $json.output?.summary || \"AI analysis failed - please review the question manually.\" }}",
+              "type": "string"
+            },
+            {
+              "id": "aiOk",
+              "name": "aiOk",
+              "value": "={{ !!$json.output?.summary }}",
+              "type": "boolean"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ab7e30da-b06a-43c7-bf8e-7852abff5e55",
+      "name": "Prepare AI Result",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1376,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "appGCNtMsH85spuSk",
+          "mode": "list",
+          "cachedResultName": "AI Lead Generation",
+          "cachedResultUrl": "https://airtable.com/appGCNtMsH85spuSk"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tbl8BRVhcV9dWtUyx",
+          "mode": "list",
+          "cachedResultName": "Leads",
+          "cachedResultUrl": "https://airtable.com/appGCNtMsH85spuSk/tbl8BRVhcV9dWtUyx"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $json.recordId }}",
+            "Category": "={{ $json.category }}",
+            "Priority": "={{ $json.priority }}",
+            "Summary": "={{ $json.summary }}",
+            "Status": "={{ $json.aiOk ? \"Qualified\" : \"Needs Review\" }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Priority",
+              "displayName": "Priority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Summary",
+              "displayName": "Summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ]
+        },
+        "options": {
+          "typecast": true
+        }
+      },
+      "id": "68819fd6-e941-4c7f-adb1-8653b372ba34",
+      "name": "Update Lead with AI Results",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        1552,
+        128
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "JoWgABtgDm4cScHy",
+          "name": "Airtable account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "sendTo": "balarohan19@gmail.com",
+        "subject": "=New {{ $(\"Prepare AI Result\").item.json.priority }}-priority lead: {{ $(\"Normalize Lead\").item.json.name }} ({{ $(\"Prepare AI Result\").item.json.category }})",
+        "message": "=<h3>New training lead</h3><ul><li><b>Name:</b> {{ $(\"Normalize Lead\").item.json.name }}</li><li><b>Email:</b> <a href=\"mailto:{{ $(\"Normalize Lead\").item.json.email }}\">{{ $(\"Normalize Lead\").item.json.email }}</a></li><li><b>Program interest:</b> {{ $(\"Normalize Lead\").item.json.programInterest }}</li><li><b>Category:</b> {{ $(\"Prepare AI Result\").item.json.category }}</li><li><b>Priority:</b> {{ $(\"Prepare AI Result\").item.json.priority }}</li></ul><p><b>AI summary:</b> {{ $(\"Prepare AI Result\").item.json.summary }}</p><p><b>Original question:</b><br>{{ $(\"Normalize Lead\").item.json.question }}</p><p><i>Airtable record: {{ $(\"Prepare AI Result\").item.json.recordId }}</i></p>",
+        "options": {
+          "appendAttribution": false,
+          "replyTo": "={{ $(\"Normalize Lead\").item.json.email }}"
+        }
+      },
+      "id": "693ba0b2-e850-424f-b039-832f7c5633e3",
+      "name": "Notify Business Owner",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1776,
+        128
+      ],
+      "webhookId": "75a3db0b-0ac6-4232-a94f-e90c5956c0da",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "GM3zNndolIvWbzY8",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "balarohan19@gmail.com",
+        "subject": "=Action needed: lead from {{ $(\"Normalize Lead\").item.json.name }} could not be saved",
+        "message": "=<p>A new Tally lead could not be saved to Airtable after 3 attempts. Please add it manually.</p><ul><li><b>Name:</b> {{ $(\"Normalize Lead\").item.json.name }}</li><li><b>Email:</b> {{ $(\"Normalize Lead\").item.json.email }}</li><li><b>Program interest:</b> {{ $(\"Normalize Lead\").item.json.programInterest }}</li><li><b>Question:</b> {{ $(\"Normalize Lead\").item.json.question }}</li></ul><p>Check the workflow execution log for the error details.</p>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "075a684d-90bf-43f0-bd5a-783aa75919ec",
+      "name": "Alert Owner: Save Failed",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1136,
+        192
+      ],
+      "webhookId": "936a054f-6af0-42ab-81c6-faf2b92ccaa0",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "GM3zNndolIvWbzY8",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "57c38665-d87f-491b-9563-6ca32e5ba2cf",
+      "name": "Ignore Invalid Submission",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        752,
+        288
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Tally Form Submission": {
+      "main": [
+        [
+          {
+            "node": "Normalize Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Lead": {
+      "main": [
+        [
+          {
+            "node": "Has Valid Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Valid Email": {
+      "main": [
+        [
+          {
+            "node": "Save Lead to Airtable",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Ignore Invalid Submission",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Lead to Airtable": {
+      "main": [
+        [
+          {
+            "node": "Categorize & Summarize Inquiry",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Alert Owner: Save Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Categorize & Summarize Inquiry": {
+      "main": [
+        [
+          {
+            "node": "Prepare AI Result",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare AI Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Categorize & Summarize Inquiry",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lead Analysis Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Categorize & Summarize Inquiry",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare AI Result": {
+      "main": [
+        [
+          {
+            "node": "Update Lead with AI Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Lead with AI Results": {
+      "main": [
+        [
+          {
+            "node": "Notify Business Owner",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notify Business Owner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "afd00489-9a10-4748-ad53-43ee5be8102f",
+  "meta": {
+    "instanceId": "d841d06c98b76cde78d2535afd5bce1142f81f7bc6d5fd195cafcdc9612de278"
+  },
+  "nodeGroups": [
+    {
+      "id": "5cb3b1c9-855c-4b3d-80b7-9d194f74911f",
+      "name": "Capture lead details",
+      "nodeIds": [
+        "974600a9-c121-474d-a3e8-e794106954d4",
+        "91cfcc60-d879-47f9-b200-04d1940a2004"
+      ],
+      "description": "Pulls name, email, program and question out of the Tally payload and checks the email looks valid"
+    },
+    {
+      "id": "9fda4378-3fb0-41f0-af80-349a458b9603",
+      "name": "Analyze inquiry",
+      "nodeIds": [
+        "53597051-5157-4f6a-84f5-3423821daebe",
+        "9b093350-b7ae-4f45-93a0-813eb4d6c1cd",
+        "550ad99e-65ba-431d-a515-d63a29b4eb18",
+        "ab7e30da-b06a-43c7-bf8e-7852abff5e55"
+      ],
+      "description": "Assigns a category, priority and short summary; falls back to \"Needs Review\" values if the AI step fails"
+    },
+    {
+      "id": "8b5282ff-ed2f-481c-a9d4-8ca390dac5fe",
+      "name": "Deliver lead insights",
+      "nodeIds": [
+        "68819fd6-e941-4c7f-adb1-8653b372ba34",
+        "693ba0b2-e850-424f-b039-832f7c5633e3"
+      ],
+      "description": "Writes the AI results back to the record, then emails the owner a summary even if that update fails"
+    }
+  ],
+  "id": "OK7YD1S9UKd6zSGV",
+  "tags": []
+}
